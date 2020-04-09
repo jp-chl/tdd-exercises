@@ -3,6 +3,7 @@ package com.jpvr.tddexercises.tdd;
 import org.hamcrest.CoreMatchers;
 import org.junit.*;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
