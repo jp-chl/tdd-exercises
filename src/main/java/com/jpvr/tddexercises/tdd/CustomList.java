@@ -1,9 +1,6 @@
 package com.jpvr.tddexercises.tdd;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 public class CustomList<E> implements List<E> {
 
@@ -18,30 +15,47 @@ public class CustomList<E> implements List<E> {
     @Override
     public boolean add(E element) {
 
-        internal = new Object[] { element };
+        //internal = new Object[] { element };
 
-        return false;
+        Object[] temp = Arrays.copyOf(internal, internal.length + 1);
+
+        temp[internal.length] = element;
+
+        internal = temp;
+
+        return true;
     } // end boolean add(E element)
 
     @Override
     public int size() {
 
-        return isEmpty() ? 0 : internal.length;
+        return internal.length;
     } // end int size()
 
-    /**
-     * Not yet implemented methods
-     */
+    @Override
+    public E get(int index) {
 
-
-
+        return (E) internal[index];
+    } // end E get(int index)
 
 
     @Override
     public boolean contains(Object o) {
+
+        for(int i=0; i<internal.length; i++) {
+
+            // Only works with String
+            if ( o.equals(get(i)) ) {
+                return true;
+            }
+        } // end iteration
+
         return false;
     }
 
+    /**
+     * Not yet implemented methods
+     */
     @Override
     public Iterator<E> iterator() {
         return null;
@@ -94,10 +108,7 @@ public class CustomList<E> implements List<E> {
 
     }
 
-    @Override
-    public E get(int index) {
-        return null;
-    }
+
 
     @Override
     public E set(int index, E element) {
