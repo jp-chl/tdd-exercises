@@ -13,6 +13,9 @@ import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.Every.everyItem;
 
+/**
+ * Based on: https://www.vogella.com/tutorials/Hamcrest/article.html
+ */
 public class HamcrestListMatcherTests {
 
     private List<Integer> list = null;

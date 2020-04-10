@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.*;
@@ -447,6 +448,269 @@ public class EmployeeStreamTests {
         assertNotEquals(distinctList, Arrays.asList(2, 5, 4, 3));
     } // end void whenApplyDistinct_thenRemoveDuplicatesFromStream()
 
+    /**
+     * allMatch, anyMatch, and noneMatch
+     *
+     * These operations all take a predicate and return a boolean.
+     * Short-circuiting is applied and processing is stopped as soon as the answer is determined.
+     */
+    @Test
+    public void whenApplyMatch_thenReturnBoolean() {
+
+        List<Integer> integerList = Arrays.asList(2, 4, 5, 6, 8);
+
+        // allMatch() checks if the predicate is true for all the elements
+        // in the stream. Here, it returns false as soon as it encounters 5, which is not divisible by 2.
+        boolean allEven = integerList.stream()
+                .allMatch(i -> i%2 == 0);
+
+
+        // anyMatch() checks if the predicate is true for any one element in the stream.
+        // Here, again short-circuiting is applied and true is returned immediately after the first element.
+        boolean oneEven = integerList.stream()
+                .anyMatch(i -> i%2 == 0);
+
+
+        // noneMatch() checks if there are no elements matching the predicate.
+        // Here, it simply returns false as soon as it encounters 6, which is divisible by 3.
+        boolean noneMultipleOfThree = integerList.stream()
+                .noneMatch(i -> i%3 == 0);
+
+        assertFalse(allEven);
+
+        assertTrue(oneEven);
+
+        assertFalse(noneMultipleOfThree);
+    } // end void whenApplyMatch_thenReturnBoolean()
+
+    /**
+     * Stream Specializations
+     *
+     * From what we discussed so far, Stream is a stream of object references.
+     * However, there are also the IntStream, LongStream, and DoubleStream
+     * which are primitive specializations for int, long and double respectively.
+     * These are quite convenient when dealing with a lot of numerical primitives.
+     *
+     * These specialized streams do not extend Stream but extend
+     * BaseStream on top of which Stream is also built.
+     *
+     * As a consequence, not all operations supported by Stream are present in
+     * these stream implementations. For example, the standard min() and max()
+     * take a comparator, whereas the specialized streams do not.
+     */
+
+    /**
+     * Creation
+     *
+     * The most common way of creating an IntStream is
+     * to call mapToInt() on an existing stream.
+     */
+    @Test
+    public void whenFindMaxOnIntStream_thenGetMaxInteger() {
+
+        Integer latestEmployeeId = employeeList
+                .stream()
+                .mapToInt(Employee::getId)
+                .max()
+                .orElseThrow(NoSuchElementException::new);
+
+        assertEquals(latestEmployeeId, new Integer(3));
+    } // end void whenFindMaxOnIntStream_thenGetMaxInteger()
+
+    /**
+     * Alternative ways to create an IntStream
+     */
+    @Test
+    public void shouldCreateValidIntegerStreams() {
+
+        assertNotNull(IntStream.of(1, 2, 3));
+
+        IntStream integerStream = IntStream.range(10, 20);
+
+        // Stream.of(1, 2, 3) returns a Stream<Integer> and not an IntStream
+        Stream<Integer> anotherIntegerStream = Stream.of(1, 2, 3);
+
+        Stream<Integer> yetAnotherIntegerStream = employeeList
+                .stream()
+                // Similarly, using map() instead of mapToInt()
+                // returns a Stream<Integer> and not an IntStream.
+                .map(Employee::getId);
+    } // end void shouldCreateValidIntegerStreams()
+
+    /**
+     * Specialized Operations
+     *
+     * Specialized streams provide additional operations as compared
+     * to the standard Stream – which are quite convenient when dealing with numbers.
+     *
+     * For example sum(), average(), range(), etc.
+     */
+    @Test
+    public void whenApplySumOnIntegerStream_thenGetSum() {
+
+        Double averageSalary = employeeList
+                .stream()
+                .mapToDouble(Employee::getSalary)
+                .average()
+                .orElseThrow(NoSuchElementException::new);
+
+        assertEquals(averageSalary, new Double(200000));
+    } // end void whenApplySumOnIntegerStream_thenGetSum()
+
+    /**
+     * Reduction Operations
+     *
+     * A reduction operation (also called as fold) takes a sequence
+     * of input elements and combines them into a single summary
+     * result by repeated application of a combining operation.
+     * We already saw few reduction operations
+     * like findFirst(), min() and max().
+     *
+     * Let’s see the general-purpose reduce() operation in action.
+     */
+
+    /**
+     * reduce
+     *
+     * The most common form of reduce() is:
+     *
+     * T reduce(T identity, BinaryOperator<T> accumulator)
+     *
+     * where identity is the starting value and accumulator
+     * is the binary operation we repeated apply.
+     */
+    @Test
+    public void whenApplyReduceOnStream_thenGetValue() {
+
+        Double sumSalary = employeeList
+                .stream()
+                .map(Employee::getSalary)
+                .reduce(0.0, Double::sum);
+
+        assertEquals(new Double(600000), sumSalary);
+    } // end void whenApplyReduceOnStream_thenGetValue()
+
+    /**
+     * Advanced collect
+     *
+     * We already saw how we used Collectors.toList() to get the list out of the stream.
+     * Let’s now see few more ways to collect elements from the stream.
+     */
+    @Test
+    public void whenCollectByJoining_thenGetJoinedString() {
+
+        String employeeNames = employeeList
+                .stream()
+                .map(Employee::getName)
+                // Collectors.joining() will insert the delimiter between the two String
+                // elements of the stream.
+                // It internally uses a java.util.StringJoiner to perform the joining operation.
+                .collect(Collectors.joining(", "))
+                .toString();
+
+        assertEquals("Jeff Bezos, Bill Gates, Mark Zuckerberg", employeeNames);
+    } // end void whenCollectByJoining_thenGetJoinedString()
+
+    /**
+     * toSet
+     *
+     * We can also use toSet() to get a set out of stream elements.
+     */
+    @Test
+    public void whenCollectBySet_thenGetSet() {
+
+        Set<String> employeeNames = employeeList
+                .stream()
+                .map(Employee::getName)
+                .collect(Collectors.toSet());
+
+        assertEquals(3, employeeNames.size());
+    } // end void whenCollectBySet_thenGetSet()
+
+    /**
+     * toCollection
+     *
+     * We can use Collectors.toCollection() to extract the elements
+     * into any other collection by passing in a Supplier<Collection>.
+     * We can also use a constructor reference for the Supplier:
+     */
+    @Test
+    public void whenToVectorCollection_thenGetVector() {
+
+        // Here, an empty collection is created internally, and its add() method
+        // is called on each element of the stream.
+        Vector<String> employeeNames = employeeList
+                .stream()
+                .map(Employee::getName)
+                .collect(Collectors.toCollection(Vector::new));
+
+        assertEquals(3, employeeNames.size());
+    } // end void whenToVectorCollection_thenGetVector()
+
+    /**
+     * summarizingDouble
+     *
+     * summarizingDouble() is another interesting collector which applies a
+     * double-producing mapping function to each input element and returns
+     * a special class containing statistical information for the resulting values.
+     */
+    @Test
+    public void whenApplySummarizing_thenGetBasisStats() {
+
+        DoubleSummaryStatistics stats = employeeList
+                .stream()
+                .collect(Collectors.summarizingDouble(Employee::getSalary));
+
+        // Notice how we can analyze the salary of each employee and get
+        // statistical information on that data – such as min, max, average, etc.
+        assertEquals(3, stats.getCount());
+        assertEquals(600000.0, stats.getSum(), 0);
+        assertEquals(100000.0, stats.getMin(), 0);
+        assertEquals(300000.0, stats.getMax(), 0);
+        assertEquals(200000.0, stats.getAverage(), 0);
+    } // end void whenApplySummarizing_thenGetBasisStats()
+
+    /**
+     * summaryStatistics() can be used to generate similar result
+     * when we’re using one of the specialized streams
+     */
+    @Test
+    public void whenApplySummaryStatistics_thenGetBasicsStats() {
+
+        DoubleSummaryStatistics stats = employeeList
+                .stream()
+                .mapToDouble(Employee::getSalary)
+                .summaryStatistics();
+
+        assertEquals(3, stats.getCount());
+        assertEquals(600000.0, stats.getSum(), 0);
+        assertEquals(100000.0, stats.getMin(), 0);
+        assertEquals(300000.0, stats.getMax(), 0);
+        assertEquals(200000.0, stats.getAverage(), 0);
+    } // end void whenApplySummaryStatistics_thenGetBasicsStats()
+
+    /**
+     * partitioningBy
+     *
+     * We can partition a stream into two
+     * based on whether the elements satisfy certain criteria or not.
+     *
+     * Let’s split our List of numerical data, into even and ods.
+     */
+    @Test
+    public void whenStreamPartition_thenGetMap() {
+
+        List<Integer> integerList = Arrays.asList(2, 4, 5, 6, 8);
+
+        // Here, the stream is partitioned into a Map,
+        // with even and odds stored as true and false keys.
+        Map<Boolean, List<Integer>> isEven = integerList
+                .stream()
+                .collect(Collectors.partitioningBy(i -> i%2 == 0));
+
+        assertEquals(4, isEven.get(true).size());
+        assertEquals(1, isEven.get(false).size());
+    } // end void whenStreamPartition_thenGetMap()
 
 
 
