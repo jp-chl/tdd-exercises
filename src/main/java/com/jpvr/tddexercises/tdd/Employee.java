@@ -47,4 +47,20 @@ public class Employee {
     public void setSalary(Double salary) {
         this.salary = salary;
     }
-}
+
+    // *************************
+    // For Stream tests
+    public Employee(Integer id, String name, Double salary) {
+        this.id = id;
+        this.name = name;
+        this.salary = salary;
+    } // end Employee(Integer id, String name, Double salary)
+
+    public void salaryIncrement(Double additionalPercentage) {
+
+        Double newSalary = salary + additionalPercentage * salary / 100;
+
+        setSalary(newSalary);
+    } // end void salaryIncrement(Double additionalProportion)
+
+} // end class Employee
