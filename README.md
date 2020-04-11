@@ -2,7 +2,7 @@
 
 Suggested order:
 - [EmployeeServiceTest](https://github.com/jp-chl/tdd-exercises/blob/master/src/test/java/com/jpvr/tddexercises/tdd/EmployeeServiceTest.java)
-- [Hamcrest tests]() in [src/test/…/hamcrest](https://github.com/jp-chl/tdd-exercises/tree/master/src/test/java/com/jpvr/tddexercises/tdd/hamcrest)
+- [Hamcrest tests; in src/test/…/hamcrest](https://github.com/jp-chl/tdd-exercises/tree/master/src/test/java/com/jpvr/tddexercises/tdd/hamcrest)
 - [StringStreamTests](https://github.com/jp-chl/tdd-exercises/blob/master/src/test/java/com/jpvr/tddexercises/tdd/streams/StringStreamTests.java)
 - [EmployeeStreamTests](https://github.com/jp-chl/tdd-exercises/blob/master/src/test/java/com/jpvr/tddexercises/tdd/streams/EmployeeStreamTests.java)
 
