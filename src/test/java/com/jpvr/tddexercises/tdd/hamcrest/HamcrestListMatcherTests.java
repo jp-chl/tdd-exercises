@@ -1,4 +1,4 @@
-package com.jpvr.tddexercises.tdd;
+package com.jpvr.tddexercises.tdd.hamcrest;
 
 import com.jpvr.tddexercises.tdd.hamcrest.Fellowship;
 import org.junit.Before;

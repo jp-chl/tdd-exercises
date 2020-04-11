@@ -1,4 +1,4 @@
-package com.jpvr.tddexercises.tdd;
+package com.jpvr.tddexercises.tdd.hamcrest;
 
 import org.junit.Test;
 
