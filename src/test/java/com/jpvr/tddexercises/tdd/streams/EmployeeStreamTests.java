@@ -5,7 +5,12 @@ import com.jpvr.tddexercises.tdd.EmployeeRepository;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -32,6 +37,8 @@ import static org.junit.Assert.*;
  * mark the stream as consumed, after which point it can no longer be used further.
  */
 public class EmployeeStreamTests {
+
+    private final String FILENAME = "test.txt";
 
     private Employee[] arrayOfEmployees;
     private List<Employee> employeeList;
@@ -703,7 +710,7 @@ public class EmployeeStreamTests {
         List<Integer> integerList = Arrays.asList(2, 4, 5, 6, 8);
 
         // Here, the stream is partitioned into a Map,
-        // with even and odds stored as true and false keys.
+        // with even and odds stored as true and false keys, respectively.
         Map<Boolean, List<Integer>> isEven = integerList
                 .stream()
                 .collect(Collectors.partitioningBy(i -> i%2 == 0));
@@ -712,33 +719,275 @@ public class EmployeeStreamTests {
         assertEquals(1, isEven.get(false).size());
     } // end void whenStreamPartition_thenGetMap()
 
+    /**
+     * groupingBy
+     *
+     * groupingBy() offers advanced partitioning
+     * where we can partition the stream into more than just two groups.
+     *
+     * It takes a classification function as its parameter.
+     * This classification function is applied to each element of the stream.
+     *
+     * The value returned by the function is used as a key to the map
+     * that we get from the groupingBy collector.
+     */
+    @Test
+    public void whenStreamGroupingBy_thenGetMap() {
 
+        Map<Character, List<Employee>> groupByAlphabet = employeeList
+                .stream()
+                .collect(
+                        // Grouped the employees based on the initial character of their first name.
+                        Collectors.groupingBy(
+                                e -> new Character(e.getName().charAt(0))
+                        )
+                );
 
+        assertEquals("Bill Gates", groupByAlphabet.get('B').get(0).getName());
+        assertEquals("Jeff Bezos", groupByAlphabet.get('J').get(0).getName());
+        assertEquals("Mark Zuckerberg", groupByAlphabet.get('M').get(0).getName());
+    } // end void whenStreamGroupingBy_thenGetMap()
 
+    /**
+     * mapping
+     *
+     * groupingBy() discussed in the section above,
+     * groups elements of the stream with the use of a Map.
+     *
+     * However, sometimes we might need to group data
+     * into a type other than the element type.
+     *
+     * Here’s how we can do that; we can use mapping() which can actually
+     * adapt the collector to a different type – using a mapping function.
+     */
+    @Test
+    public void whenStreamMapping_thenGetMap() {
 
-//
-//    @Test
-//    public void a() {
-//
-//    } // end a()
-//
-//    @Test
-//    public void a() {
-//
-//    } // end a()
-//
-//    @Test
-//    public void a() {
-//
-//    } // end a()
-//
-//    @Test
-//    public void a() {
-//
-//    } // end a()
-//
-//    @Test
-//    public void a() {
-//
-//    } // end a()
+        Map<Character, List<Integer>> idGroupedByAlphabet = employeeList
+                .stream()
+                .collect(
+                        Collectors.groupingBy(
+                                e -> new Character(e.getName().charAt(0)),
+                                Collectors.mapping(Employee::getId, Collectors.toList())
+                        )
+                );
+
+        // Here mapping() maps the stream element Employee into just the employee id
+        // which is an Integer, using the getId() mapping function. These ids are still
+        // grouped based on the initial character of employee first name.
+        assertEquals(new Integer(2), idGroupedByAlphabet.get('B').get(0));
+        assertEquals(new Integer(1), idGroupedByAlphabet.get('J').get(0));
+        assertEquals(new Integer(3), idGroupedByAlphabet.get('M').get(0));
+    } // end void whenStreamMapping_thenGetMap()
+
+    /**
+     * reducing
+     *
+     * reducing() is similar to reduce() – which we explored before. It simply returns
+     * a collector which performs a reduction of its input elements.
+     */
+    @Test
+    public void whenStreamReducing_thenGetValue() {
+
+        Double percentage = 10.0;
+        Double salaryIncreaseOverhead = employeeList
+                .stream()
+                .collect(
+                        Collectors.reducing(
+                                0.0,
+                                e -> e.getSalary() * percentage / 100,
+                                (s1, s2) -> s1 + s2
+                        )
+                );
+
+        // Here reducing() gets the salary increment
+        // of each employee and returns the sum.
+        assertEquals(60000.0, salaryIncreaseOverhead, 0);
+    } // end void whenStreamReducing_thenGetValue()
+
+    /**
+     * reducing() is most useful when used in a multi-level reduction,
+     * downstream of groupingBy() or partitioningBy().
+     * To perform a simple reduction on a stream, use reduce() instead.
+     *
+     * For example, let’s see how we can use reducing() with groupingBy().
+     */
+    @Test
+    public void whenStreamGroupingAndReducing_thenGetMap() {
+
+        Comparator<Employee> comparatorByNameLength = Comparator.comparing(Employee::getName);
+
+        Map<Character, Optional<Employee>> longestNameByAlphabet = employeeList
+                .stream()
+                .collect(
+                        Collectors.groupingBy(
+                                e -> new Character(e.getName().charAt(0)),
+                                Collectors.reducing(BinaryOperator.maxBy(comparatorByNameLength))
+                        )
+                );
+
+        // Here we group the employees based on the initial character of
+        // their first name. Within each group, we find the employee with the longest name.
+        assertEquals("Bill Gates", longestNameByAlphabet.get('B').get().getName());
+        assertEquals("Jeff Bezos", longestNameByAlphabet.get('J').get().getName());
+        assertEquals("Mark Zuckerberg", longestNameByAlphabet.get('M').get().getName());
+    } // end whenStreamGroupingAndReducing_thenGetMap()
+
+    /**
+     * Parallel Streams
+     *
+     * Using the support for parallel streams, we can perform stream operations
+     * in parallel without having to write any boilerplate code;
+     * we just have to designate the stream as parallel.
+     */
+    @Test
+    public void whenParallelStream_thenPerformOperationsInParallel() {
+
+        employeeList
+                .stream()
+                .parallel()
+                .forEach(e -> e.salaryIncrement(10.0));
+
+        // Here salaryIncrement() would get executed in parallel on multiple
+        // elements of the stream, by simply adding the parallel() syntax.
+        //
+        // This functionality can, of course, be tuned and configured further,
+        // if you need more control over the performance characteristics of the operation.
+        //
+        // As is the case with writing multi-threaded code, we need to be aware
+        // of few things while using parallel streams:
+        //
+        // 1. We need to ensure that the code is thread-safe. Special care needs
+        //    to be taken if the operations performed in parallel modifies shared data.
+        // 2. We should not use parallel streams if the order in which operations
+        //    are performed or the order returned in the output stream matters.
+        //    For example operations like findFirst() may generate the different
+        //    result in case of parallel streams.
+        // 3. Also, we should ensure that it is worth making the code execute in parallel.
+        //    Understanding the performance characteristics of the operation in particular,
+        //    but also of the system as a whole – is naturally very important here.
+        assertThat(employeeList,
+                contains(
+                        hasProperty("salary", equalTo(110000.0)),
+                        hasProperty("salary", equalTo(220000.0)),
+                        hasProperty("salary", equalTo(330000.0))
+                ));
+    } // end void whenParallelStream_thenPerformOperationsInParallel()
+
+    /**
+     * Infinite Streams
+     *
+     * Sometimes, we might want to perform operations while the elements are still
+     * getting generated. We might not know beforehand how many elements we’ll need.
+     * Unlike using list or map, where all the elements are already populated,
+     * we can use infinite streams, also called as unbounded streams.
+     *
+     * There are two ways to generate infinite streams.
+     */
+
+    /**
+     * generate
+     *
+     * We provide a Supplier to generate() which gets called whenever
+     * new stream elements need to be generated.
+     */
+    @Test
+    public void whenGenerateStream_thenGetInfiniteStream() {
+
+        // Here, we pass Math::random() as a Supplier,
+        // which returns the next random number.
+        Stream.generate(Math::random)
+                .limit(5)
+                .forEach(System.out::println);
+
+        // With infinite streams, we need to provide a condition to eventually
+        // terminate the processing. One common way of doing this is using limit().
+        // In above example, we limit the stream to 5 random numbers
+        // and print them as they get generated.
+        //
+        // Please note that the Supplier passed to generate() could be stateful
+        // and such stream may not produce the same result when used in parallel.
+    } // end whenGenerateStream_thenGetInfiniteStream()
+
+    /**
+     * iterate
+     *
+     * iterate() takes two parameters:
+     * - an initial value, called seed element, and
+     * - a function which generates next element using the previous value.
+     * iterate(), by design, is stateful and hence may not be useful in parallel streams.
+     */
+    @Test
+    public void whenIterateStream_thenGetInfiniteStream() {
+
+        // Here, we pass 2 as the seed value, which becomes the first element of our stream.
+        // This value is passed as input to the lambda, which returns 4.
+        // This value, in turn, is passed as input in the next iteration.
+        //
+        // This continues until we generate the number of elements
+        // specified by limit() which acts as the terminating condition.
+        Stream<Integer> evenNumbersStream = Stream.iterate(2, i -> i * 2);
+
+        // The first element of the list is the "seed" of the iterator.
+        List<Integer> collectList = evenNumbersStream
+                .limit(5)
+                .collect(Collectors.toList());
+
+        assertEquals(Arrays.asList(2, 4, 8, 16, 32), collectList);
+    } // end void whenIterateStream_thenGetInfiniteStream()
+
+    /**
+     * File Operations
+     *
+     * Let's see how we could use the stream in file operations.
+     */
+
+    /**
+     * File Write Operation.
+     */
+    @Test
+    public void whenStreamToFile_thenGetFile() throws IOException {
+
+        String[] words = {
+                "hello", "refer", "world", "level"
+        };
+
+        // Here we use forEach() to write each element of the stream
+        // into the file by calling PrintWriter.println().
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(Paths.get(FILENAME)))) {
+
+            Stream.of(words).forEach(pw::println);
+        }
+    } // end void whenStreamToFile_thenGetFile()
+
+    /**
+     * File Read Operation.
+     */
+    private List<String> getPalindrome(Stream<String> stream, int length) {
+
+        return stream
+                .filter(s -> s.length() == length)
+                .filter(s -> s.compareToIgnoreCase(new StringBuilder(s).reverse().toString()) == 0)
+                .collect(Collectors.toList());
+    } // end List<String> getPalindrome(Stream<String> stream, int length)
+    /**
+     * Here Files.lines() returns the lines from the file as a Stream
+     * which is consumed by the getPalindrome() for further processing.
+     *
+     * getPalindrome() works on the stream, completely unaware of
+     * how the stream was generated.
+     * This also increases code reusability and simplifies unit testing.
+     */
+    @Test
+    public void whenFileToStream_thenGetStream() throws IOException {
+
+        if ( !Files.exists(Paths.get(FILENAME))) {
+            whenStreamToFile_thenGetFile();
+        }
+
+        List<String> palindrome = getPalindrome(Files.lines(Paths.get(FILENAME)), 5);
+
+        assertThat(palindrome, contains("refer", "level"));
+    } // end void whenFileToStream_thenGetStream()
+
 } // end class EmployeeStreamTests

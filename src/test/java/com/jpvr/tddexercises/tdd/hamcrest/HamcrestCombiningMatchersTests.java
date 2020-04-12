@@ -27,8 +27,8 @@ public class HamcrestCombiningMatchersTests {
 
         List<Integer> list = new ArrayList<>();
         //list.add(1);
-        //list.add(42);
 
+        //list.add(42);
         assertThat(list, both(hasSize(1)).and(contains(42)));
 
     } // end void methodWithHardToReadError()
@@ -49,8 +49,8 @@ public class HamcrestCombiningMatchersTests {
 
         List<Integer> list = new ArrayList<>();
         //list.add(1);
-        //list.add(42);
 
+        //list.add(42);
         assertThat(list, matches(hasSize(1)).and(contains(42)));
     } // end void customMatcherWithReadableError()
 } // end class HamcrestCombiningMatchersTests
